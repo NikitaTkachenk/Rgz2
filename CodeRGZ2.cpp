@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <fstream>
+
 using namespace std;
 
 vector<string> split(const string& str, char delimiter) {
@@ -13,6 +15,7 @@ vector<string> split(const string& str, char delimiter) {
     }
     return tokens;
 }
+
 string join(const vector<string>& tokens, char delimiter) {
     ostringstream result;
     for (size_t i = 0; i < tokens.size(); ++i) {
@@ -23,10 +26,12 @@ string join(const vector<string>& tokens, char delimiter) {
     }
     return result.str();
 }
+
 void editTags(vector<string>& tags) {
-    for (size_t i = 4; i < tags.size()-1; ++i) {
-        cout << "Current tag " << i - 3 << ": " << tags[i] << endl;
-        cout << "Enter new tag(or space to leave current tag): ";
+    vector<string> tagNames = { "Title", "Artist", "Album", "Year", "Comment", "Track", "Genre" };
+    for (size_t i = 0; i < tags.size(); ++i) {
+        cout << "Current " << tagNames[i] << ": " << tags[i] << endl;
+        cout << "Enter new " << tagNames[i] << " (or press Enter to leave unchanged): ";
         string input;
         getline(cin, input);
         if (!input.empty()) {
@@ -34,13 +39,41 @@ void editTags(vector<string>& tags) {
         }
     }
 }
+
 int main() {
+    string filePath;
+    cout << "Enter the path to the metadata file: ";
+    getline(cin, filePath);
+
+    ifstream fin(filePath);
+    if (!fin.is_open()) {
+        cerr << "Error opening file!" << endl;
+        return 1;
+    }
+
     string inputStr;
-    cout << "Enter metadata string: ";
-    getline(cin, inputStr);
-    vector<string> tags = split(inputStr, '/');
+    getline(fin, inputStr);
+    fin.close();
+
+    vector<string> tags = split(inputStr, ',');
+
+    cout << "Metadata tags read from file:" << endl;
+    for (const auto& tag : tags) {
+        cout << tag << ", ";
+    }
+
     editTags(tags);
-    string outputStr = join(tags, '/');
-    cout << "Updated metadata string: " << outputStr << endl;
+
+    string outputStr = join(tags, ',');
+    ofstream fout(filePath);
+    if (!fout.is_open()) {
+        cerr << "Error writing to file!" << endl;
+        return 1;
+    }
+
+    fout << outputStr;
+    fout.close();
+
+    cout << "Updated metadata string saved to file: " << filePath << endl;
     return 0;
 }
